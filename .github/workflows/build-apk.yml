@@ -6,6 +6,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'DRONE_DEFENDER_Android_v1_0.zip'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -19,52 +25,38 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - name: Configurar Android SDK
-        run: |
-          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses
+        uses: android-actions/setup-android@v4
+        with:
+          accept-android-sdk-licenses: true
+          packages: |
+            platform-tools
+            platforms;android-35
+            build-tools;35.0.0
 
-      - name: Instalar herramientas Android
-        run: |
-          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
+      - name: Configurar Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
-      - name: Buscar proyecto Gradle
+      - name: Descomprimir proyecto Android
         run: |
-          echo "Repositorio Piko:"
-          ls -la
-          find . -maxdepth 5 -type f \( \
-            -name settings.gradle -o \
-            -name settings.gradle.kts \
-          \)
+          test -f DRONE_DEFENDER_Android_v1_0.zip
+          mkdir -p proyecto
+          unzip -q -o DRONE_DEFENDER_Android_v1_0.zip -d proyecto
+          test -f proyecto/DRONE_DEFENDER/settings.gradle.kts
+          test -f proyecto/DRONE_DEFENDER/app/build.gradle.kts
 
       - name: Compilar DRONE DEFENDER
-        run: |
-          FILE=$(find . -maxdepth 5 -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
-
-          if [ -z "$FILE" ]; then
-            echo "ERROR: No existe un proyecto Gradle."
-            exit 1
-          fi
-
-          DIR=$(dirname "$FILE")
-          cd "$DIR"
-
-          if [ -f gradlew ]; then
-            chmod +x gradlew
-            ./gradlew assembleDebug
-          else
-            gradle assembleDebug
-          fi
+        working-directory: proyecto/DRONE_DEFENDER
+        run: gradle --no-daemon assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: DRONE-DEFENDER-APK
-          path: "**/build/outputs/apk/debug/*.apk"
+          name: DRONE-DEFENDER-v1.0-APK
+          path: proyecto/DRONE_DEFENDER/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 14
