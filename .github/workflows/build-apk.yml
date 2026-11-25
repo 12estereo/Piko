@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - 'DRONE_DEFENDER_Android_v1_0.zip'
+      - 'DRONE_DEFENDER_Android_v1_1.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -40,20 +40,20 @@ jobs:
 
       - name: Descomprimir proyecto Android
         run: |
-          test -f DRONE_DEFENDER_Android_v1_0.zip
+          test -f DRONE_DEFENDER_Android_v1_1.zip
           mkdir -p proyecto
-          unzip -q -o DRONE_DEFENDER_Android_v1_0.zip -d proyecto
-          test -f proyecto/DRONE_DEFENDER/settings.gradle.kts
-          test -f proyecto/DRONE_DEFENDER/app/build.gradle.kts
+          unzip -q -o DRONE_DEFENDER_Android_v1_1.zip -d proyecto
+          test -f proyecto/DRONE_DEFENDER_Android_v1_1/settings.gradle.kts
+          test -f proyecto/DRONE_DEFENDER_Android_v1_1/app/build.gradle.kts
 
       - name: Compilar DRONE DEFENDER
-        working-directory: proyecto/DRONE_DEFENDER
+        working-directory: proyecto/DRONE_DEFENDER_Android_v1_1
         run: gradle --no-daemon assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: DRONE-DEFENDER-v1.0-APK
-          path: proyecto/DRONE_DEFENDER/app/build/outputs/apk/debug/app-debug.apk
+          name: DRONE-DEFENDER-v1.1-APK
+          path: proyecto/DRONE_DEFENDER_Android_v1_1/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
