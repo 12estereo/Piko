@@ -22,43 +22,41 @@ jobs:
           java-version: "17"
 
       - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Aceptar licencias
-        run: yes | sdkmanager --licenses
-
-      - name: Instalar Android SDK
         run: |
-          sdkmanager --install "platform-tools"
-          sdkmanager --install "platforms;android-35"
-          sdkmanager --install "build-tools;35.0.0"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          yes | "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" --licenses
+
+      - name: Instalar herramientas Android
+        run: |
+          "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Buscar proyecto Gradle
-        id: project
         run: |
-          echo "Contenido del repositorio:"
+          echo "Repositorio Piko:"
           ls -la
+          find . -maxdepth 5 -type f \( \
+            -name settings.gradle -o \
+            -name settings.gradle.kts \
+          \)
 
+      - name: Compilar DRONE DEFENDER
+        run: |
           FILE=$(find . -maxdepth 5 -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n 1)
 
           if [ -z "$FILE" ]; then
-            echo "ERROR: No se encontró settings.gradle"
-            echo "Archivos encontrados:"
-            find . -maxdepth 4 -type f | head -100
+            echo "ERROR: No existe un proyecto Gradle."
             exit 1
           fi
 
           DIR=$(dirname "$FILE")
-          echo "Proyecto encontrado en: $DIR"
-          echo "project_dir=$DIR" >> "$GITHUB_OUTPUT"
+          cd "$DIR"
 
-      - name: Compilar DRONE DEFENDER
-        working-directory: .
-        run: |
-          cd "${{ steps.project.outputs.project_dir }}"
-
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
+          if [ -f gradlew ]; then
+            chmod +x gradlew
             ./gradlew assembleDebug
           else
             gradle assembleDebug
