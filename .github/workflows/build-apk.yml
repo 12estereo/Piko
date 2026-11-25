@@ -1,5 +1,5 @@
 
-name: Build DRONE DEFENDER APK
+name: Build MATRIX CODE ZERO APK
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
     branches:
       - main
     paths:
-      - 'DRONE_DEFENDER_Android_v1_1.zip'
+      - 'MATRIX_CODE_ZERO_Android_v1_0.zip'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -16,7 +16,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
@@ -38,22 +37,22 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Descomprimir proyecto Android
+      - name: Descomprimir proyecto
         run: |
-          test -f DRONE_DEFENDER_Android_v1_1.zip
+          test -f MATRIX_CODE_ZERO_Android_v1_0.zip
           mkdir -p proyecto
-          unzip -q -o DRONE_DEFENDER_Android_v1_1.zip -d proyecto
-          test -f proyecto/DRONE_DEFENDER_Android_v1_1/settings.gradle.kts
-          test -f proyecto/DRONE_DEFENDER_Android_v1_1/app/build.gradle.kts
+          unzip -q -o MATRIX_CODE_ZERO_Android_v1_0.zip -d proyecto
+          test -f proyecto/settings.gradle.kts
+          test -f proyecto/app/build.gradle.kts
 
-      - name: Compilar DRONE DEFENDER
-        working-directory: proyecto/DRONE_DEFENDER_Android_v1_1
+      - name: Compilar APK
+        working-directory: proyecto
         run: gradle --no-daemon assembleDebug
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
-          name: DRONE-DEFENDER-v1.1-APK
-          path: proyecto/DRONE_DEFENDER_Android_v1_1/app/build/outputs/apk/debug/app-debug.apk
+          name: MATRIX-CODE-ZERO-v1.0-APK
+          path: proyecto/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
